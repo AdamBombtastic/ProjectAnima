@@ -33,7 +33,7 @@ var loginState = {
     }*/},
     ConfirmationDialogFinish: function(obj) {
         obj.kill();
-        this.ShowUI();
+        //this.ShowUI();
         
     },
     preload : function() {
@@ -53,8 +53,11 @@ var loginState = {
        
     },
     loginFailed : function() {
-        UIManager.ClearUI();
-        UIManager.createConfirmationDialog(game.world.centerX, game.world.centerY, "Invalid Login",true).delegate = this;
+        var diag = new UIManager.UIDialog("myDiag",game.world.centerX,game.world.centerY,"Login Failed.",true);
+        diag.Show().delegate = this;
+        this.loginPanel.UpdateObject();
+        //UIManager.ClearUI();
+        //UIManager.createConfirmationDialog(game.world.centerX, game.world.centerY, "Invalid Login",true).delegate = this;
     },
     loginSuccess : function() {
         UIManager.ClearUI();
@@ -80,17 +83,26 @@ var loginState = {
         this.userEntry = new UIManager.UIEntry("user",this.loginPanel.LocalCenterX()-(125/2), this.loginPanel.LocalCenterY()-50,125,25,false);
         this.passEntry = new UIManager.UIEntry("pass",this.userEntry.X(), this.userEntry.Y()+35,125,25,true);
         this.loginBtn = new UIManager.UIButton("loginBtn",this.userEntry.X(),this.passEntry.Y()+45,128,35,"Login");
+        
+        this.testBtn = new UIManager.UIButton("testBtn",this.loginBtn.X(),this.loginBtn.Y()+45,128,35,"TEST");
 
-        this.loginPanel.AddAll([this.userEntry,this.passEntry,this.loginBtn]);
+        this.loginPanel.AddAll([this.userEntry,this.passEntry,this.loginBtn,this.testBtn]);
 
         UIManager.createUIElement(this.loginPanel);
 
         this.userEntry.Text("Username");
         this.passEntry.Text("Password");
 
-        this.loginBtn.DomObject().onclick= function() {
+        //this.loginBtn.DomObject().onclick= function() {
+        //    loginState.DoLogin();
+        //}
+        this.loginBtn.events.onClick.add(function() {
             loginState.DoLogin();
-        }
+        },this);
+
+        this.testBtn.events.onClick.add(function() {
+            console.log("Testing this functionality!");
+        },this);
     }
 }
 

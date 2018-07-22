@@ -145,6 +145,9 @@ var UIManager = {
         this._y = y;
         this._width = width;
         this._height = height;
+        this._eventMap = {
+            onClick : [],
+        }
 
         this._domObject = null;
         this._class = "div";
@@ -166,10 +169,16 @@ var UIManager = {
         this.UpdateObject = function() {
             /** Override this for different implementations **/
             this.Style(this.GetStyleString());
+            if (me.DomObject() != null) me.DomObject().onclick = () => {
+                me._onClick();
+            };
         }
         this.Kill = function() {
             this.RefreshSelector();
-            this._domObject.remove();
+            if (this._domObject != null)this._domObject.remove();
+        }
+        this.kill = function() {
+            this.Kill();
         }
         this.GenHTML = function() {
             return "<"+this._class +" id='"+this.id+"'> </"+this._class+">"; 
@@ -253,13 +262,34 @@ var UIManager = {
         }
         
         //TODO: Add events like Phaser objects
+        let me = this;
         this.events = {
             onClick : {
-                
+                add : function(func,context) {
+                    me._eventMap.onClick.push({func:func,context:context});
+                    me.DomObject().onclick = () => {
+                        me._onClick();
+                    };
+                },
+                clear : function() {
+                    me._eventMap.onClick = [];
+                }
             }
         }
+        this._onClick = function() {
+            for (var i = 0; i < this._eventMap.onClick.length;i++) {
+                var funcInfo = this._eventMap.onClick[i];
+                var myFunc = funcInfo.func.bind(funcInfo.context);
+                myFunc.call(funcInfo.context,null);
+            }
+        }
+
         //endregion    
 
+    },
+    UILabel : function (id,x,y,width,height,text,fontSize,fontColor) {
+        UIManager.UIBase.call(this,id,x,y,width,height);
+        
     },
     UIEntry : function(id,x,y,width,height,isPassword) {
         UIManager.UIBase.call(this,id,x,y,width,height);
@@ -304,6 +334,9 @@ var UIManager = {
 
         this.UpdateObject = function() {
             this.Style(this.GenExtraStyle());
+            if (this.DomObject() != null) this.DomObject().onclick = () => {
+                this._onClick();
+            };
 
             for (var i = 0; i < this._children.length; i++) {
                 this._children[i].RefreshSelector();
@@ -337,6 +370,51 @@ var UIManager = {
             styleString += "border-color: "+this._borderColor +"; border-width" + this.borderWidth + "; ";
             styleString += "border-style: solid;";
             return styleString;
+        }
+        this.Kill = () => {
+            this.RefreshSelector();
+            if (this._domObject != null)this._domObject.remove();
+
+            for (var i = 0; i < this._children.length; i++) {
+                this._children[i].Kill();
+            }
+        }
+    },
+    UIDialog : function(id,x,y,text,isOnebutton=true,width=500,height=350,backgroundColor="Gray", textColor="White", borderColor="Black", borderWidth="2px") {
+        UIManager.UIPanel.call(this,id,x,y,width,height,backgroundColor,textColor,borderColor,borderWidth);
+        this.delegate = null;
+        this.response = null;
+        this._label = new UIManager.UIBase(id+"-label",this.LocalCenterX(),20,150,100);
+        if (isOnebutton) {
+            this._yesButton = new UIManager.UIButton(id+"-posbtn",this._label.X(), this.Height()-50,20,20,"Ok");
+            this.AddAll([this._label,this._yesButton]);
+        }
+        else {
+            this._yesButton = new UIManager.UIButton(id+"-posbtn",this._label.X()-100, this.Height()-50,20,20,"Ok");
+            this._noButton = new UIManager.UIButton(id+"-negbtn",this._label.X()+100, this.Height()-50,20,20,"Cancel");
+            this.AddAll([this._label,this._yesButton,this._noButton]);
+        }
+        let me = this;
+        this.Show = function() {
+            if (this.DomObject() == null) {
+                me = UIManager.createUIElement(me);
+                me._label.InnerText(text);
+                me._yesButton.events.onClick.add(function() {
+                    me.response = true;
+                    if (me.delegate != null) {
+                        me.delegate.ConfirmationDialogFinish(me);
+                    }
+                },this);
+                if (!isOnebutton) {
+                    me._noButton.events.onClick.add(function() {
+                        me.response = false;
+                        if (me.delegate != null) {
+                            me.delegate.ConfirmationDialogFinish(me);
+                        }
+                    },this);
+                }
+            }
+            return me;
         }
     },
     createUIElement : function (uibase) {

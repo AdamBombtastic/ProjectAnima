@@ -233,6 +233,25 @@ var UIManager = {
             if (this._domObject != null) this.RefreshSelector();
             return this._domObject;
         }
+        this.LocalCenterX = function() {
+            return this.Width()/2;
+        }
+        this.CenterX = function(x=null) {
+            if (x != null) {
+                this.X(x-(this.Width()/2));
+            }
+            return this.X()+(this.Width()/2);
+        }
+        this.LocalCenterY = function() {
+            return this.Height()/2;
+        }
+        this.CenterY = function(y=null) {
+            if (t != null) {
+                this.Y(y-(this.Height()/2));
+            }
+            return this.Y()+(this.Height()/2)
+        }
+        
         //TODO: Add events like Phaser objects
         this.events = {
             onClick : {
@@ -274,6 +293,51 @@ var UIManager = {
             }
             return null;
         } 
+    },
+    UIPanel : function(id,x,y,width,height,backgroundColor="Gray", textColor="White", borderColor="Black", borderWidth="2px") {
+        UIManager.UIBase.call(this,id,x,y,width,height);
+        this._children = [];
+        this._backgroundColor = backgroundColor;
+        this._textColor = textColor;
+        this._borderColor = borderColor;
+        this.borderWidth = borderWidth;
+
+        this.UpdateObject = function() {
+            this.Style(this.GenExtraStyle());
+
+            for (var i = 0; i < this._children.length; i++) {
+                this._children[i].RefreshSelector();
+                this._children[i].UpdateObject();
+            }
+        }
+
+        this.Add = function(obj) {
+            if (this._children.indexOf(obj)==-1) {
+                this._children.push(obj);
+            }
+        }
+        this.AddAll = function(objs) {
+            for (var i = 0; i < objs.length; i++) {
+                this.Add(objs[i]);
+            }
+        }
+        this.GenChildHTML = function() {
+            var html = "";
+            for (var i = 0; i < this._children.length; i++) {
+                html+=this._children[i].GenHTML();
+            }
+            return html;
+        }
+        this.GenHTML= function() {
+            return "<"+this._class +" id='"+this.id+"'>"+this.GenChildHTML()+" </"+this._class+">"; 
+        }
+        this.GenExtraStyle=function() {
+            var styleString = this.GetStyleString();
+            styleString += "background-color: "+this._backgroundColor+"; color:"+textColor+"; ";
+            styleString += "border-color: "+this._borderColor +"; border-width" + this.borderWidth + "; ";
+            styleString += "border-style: solid;";
+            return styleString;
+        }
     },
     createUIElement : function (uibase) {
         var canvasElement = document.getElementById("uiMan");        

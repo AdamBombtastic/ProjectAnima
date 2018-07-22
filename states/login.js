@@ -33,6 +33,7 @@ var loginState = {
     }*/},
     ConfirmationDialogFinish: function(obj) {
         obj.kill();
+        this.ShowUI();
         
     },
     preload : function() {
@@ -45,23 +46,14 @@ var loginState = {
         game.stage.backgroundColor=0x995544;
         NetworkManager.connect();
         
-        this.userEntry = UIManager.createUIElement(new UIManager.UIEntry("user",game.world.centerX-(125/2), game.world.centerY-50,125,25,false));
-        this.passEntry = UIManager.createUIElement(new UIManager.UIEntry("pass",game.world.centerX-(125/2), this.userEntry.Y()+35,125,25,true));
-
-        this.loginBtn = UIManager.createUIElement(new UIManager.UIButton("loginBtn",this.userEntry.X(),this.passEntry.Y()+45,128,35,"Login"));
-
-        this.userEntry.Text("Username");
-        this.passEntry.Text("Password");
-
-        this.loginBtn.DomObject().onclick= function() {
-            loginState.DoLogin();
-        }
+        this.ShowUI();
         //UIManager.createConfirmationDialog(game.world.centerX,game.world.centerY,"Welcome to my world",true).delegate = this;
     },
     update : function() {
        
     },
     loginFailed : function() {
+        UIManager.ClearUI();
         UIManager.createConfirmationDialog(game.world.centerX, game.world.centerY, "Invalid Login",true).delegate = this;
     },
     loginSuccess : function() {
@@ -74,6 +66,30 @@ var loginState = {
             NetworkManager.TryLogin(creds);
             this.userEntry.Value("");
             this.passEntry.Value("");
+        }
+    },
+    ShowUI : function() {
+
+        this.loginPanel = new UIManager.UIPanel("panel",game.world.centerX-300,game.world.centerY-225,600,450);
+        /*
+        this.userEntry = UIManager.createUIElement(new UIManager.UIEntry("user",game.world.centerX-(125/2), game.world.centerY-50,125,25,false));
+        this.passEntry = UIManager.createUIElement(new UIManager.UIEntry("pass",game.world.centerX-(125/2), this.userEntry.Y()+35,125,25,true));
+
+        this.loginBtn = UIManager.createUIElement(new UIManager.UIButton("loginBtn",this.userEntry.X(),this.passEntry.Y()+45,128,35,"Login"));
+        */
+        this.userEntry = new UIManager.UIEntry("user",this.loginPanel.LocalCenterX()-(125/2), this.loginPanel.LocalCenterY()-50,125,25,false);
+        this.passEntry = new UIManager.UIEntry("pass",this.userEntry.X(), this.userEntry.Y()+35,125,25,true);
+        this.loginBtn = new UIManager.UIButton("loginBtn",this.userEntry.X(),this.passEntry.Y()+45,128,35,"Login");
+
+        this.loginPanel.AddAll([this.userEntry,this.passEntry,this.loginBtn]);
+
+        UIManager.createUIElement(this.loginPanel);
+
+        this.userEntry.Text("Username");
+        this.passEntry.Text("Password");
+
+        this.loginBtn.DomObject().onclick= function() {
+            loginState.DoLogin();
         }
     }
 }

@@ -22,15 +22,7 @@ var loginState = {
                 loginState.loginFailed();
             }
         }
-        /*if (event == "addRock") {
-            this.AddRock(data);
-        }
-        else if (event == "addPlayer") {
-            for (var i  = 0; i < data.length; i ++) {
-                this.AddRock(data[i]);
-            }
-        }
-    }*/},
+        },
     ConfirmationDialogFinish: function(obj) {
         obj.kill();
         //this.ShowUI();
@@ -61,7 +53,8 @@ var loginState = {
     },
     loginSuccess : function() {
         UIManager.ClearUI();
-        UIManager.createConfirmationDialog(game.world.centerX, game.world.centerY, "Welcome to Anima",true).delegate = this;
+        new UIManager.UIDialog("myDiag",game.world.centerX,game.world.centerY,"Welcome to Anima!",false).Show().delegate = this;
+        //UIManager.createConfirmationDialog(game.world.centerX, game.world.centerY, "Welcome to Anima",true).delegate = this;
     },
     DoLogin : function() {
         var creds = {username:this.userEntry.Value(),password:this.passEntry.Value()}
@@ -74,19 +67,14 @@ var loginState = {
     ShowUI : function() {
 
         this.loginPanel = new UIManager.UIPanel("panel",game.world.centerX-300,game.world.centerY-225,600,450);
-        /*
-        this.userEntry = UIManager.createUIElement(new UIManager.UIEntry("user",game.world.centerX-(125/2), game.world.centerY-50,125,25,false));
-        this.passEntry = UIManager.createUIElement(new UIManager.UIEntry("pass",game.world.centerX-(125/2), this.userEntry.Y()+35,125,25,true));
 
-        this.loginBtn = UIManager.createUIElement(new UIManager.UIButton("loginBtn",this.userEntry.X(),this.passEntry.Y()+45,128,35,"Login"));
-        */
         this.userEntry = new UIManager.UIEntry("user",this.loginPanel.LocalCenterX()-(125/2), this.loginPanel.LocalCenterY()-50,125,25,false);
         this.passEntry = new UIManager.UIEntry("pass",this.userEntry.X(), this.userEntry.Y()+35,125,25,true);
         this.loginBtn = new UIManager.UIButton("loginBtn",this.userEntry.X(),this.passEntry.Y()+45,128,35,"Login");
         
-        this.testBtn = new UIManager.UIButton("testBtn",this.loginBtn.X(),this.loginBtn.Y()+45,128,35,"TEST");
+       //this.testBtn = new UIManager.UIButton("testBtn",this.loginBtn.X(),this.loginBtn.Y()+45,128,35,"TEST");
 
-        this.loginPanel.AddAll([this.userEntry,this.passEntry,this.loginBtn,this.testBtn]);
+        this.loginPanel.AddAll([this.userEntry,this.passEntry,this.loginBtn/*,this.testBtn*/]);
 
         UIManager.createUIElement(this.loginPanel);
 
@@ -100,9 +88,6 @@ var loginState = {
             loginState.DoLogin();
         },this);
 
-        this.testBtn.events.onClick.add(function() {
-            console.log("Testing this functionality!");
-        },this);
     }
 }
 

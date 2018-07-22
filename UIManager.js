@@ -255,7 +255,7 @@ var UIManager = {
             return this.Height()/2;
         }
         this.CenterY = function(y=null) {
-            if (t != null) {
+            if (y != null) {
                 this.Y(y-(this.Height()/2));
             }
             return this.Y()+(this.Height()/2)
@@ -289,6 +289,8 @@ var UIManager = {
     },
     UILabel : function (id,x,y,width,height,text,fontSize,fontColor) {
         UIManager.UIBase.call(this,id,x,y,width,height);
+
+        //TODO: Make this label happen
         
     },
     UIEntry : function(id,x,y,width,height,isPassword) {
@@ -380,25 +382,30 @@ var UIManager = {
             }
         }
     },
-    UIDialog : function(id,x,y,text,isOnebutton=true,width=500,height=350,backgroundColor="Gray", textColor="White", borderColor="Black", borderWidth="2px") {
+    UIDialog : function(id,x,y,text,isOnebutton=true,width=500,height=250,backgroundColor="rgba(99,99,99,0.95)", textColor="White", borderColor="Black", borderWidth="2px") {
         UIManager.UIPanel.call(this,id,x,y,width,height,backgroundColor,textColor,borderColor,borderWidth);
         this.delegate = null;
         this.response = null;
-        this._label = new UIManager.UIBase(id+"-label",this.LocalCenterX(),20,150,100);
+        this._label = new UIManager.UIBase(id+"-label",this.LocalCenterX()-(450/2),this.LocalCenterY()-50,450,100);
         if (isOnebutton) {
-            this._yesButton = new UIManager.UIButton(id+"-posbtn",this._label.X(), this.Height()-50,20,20,"Ok");
+            this._yesButton = new UIManager.UIButton(id+"-posbtn",this.LocalCenterX()-(75/2), this.Height()-125,75,75,"Ok");
             this.AddAll([this._label,this._yesButton]);
         }
         else {
-            this._yesButton = new UIManager.UIButton(id+"-posbtn",this._label.X()-100, this.Height()-50,20,20,"Ok");
-            this._noButton = new UIManager.UIButton(id+"-negbtn",this._label.X()+100, this.Height()-50,20,20,"Cancel");
+            this._yesButton = new UIManager.UIButton(id+"-posbtn",(this.LocalCenterX()-(75/2))-100, this.Height()-125,75,75,"Ok");
+            this._noButton = new UIManager.UIButton(id+"-negbtn",(this.LocalCenterX()-(75/2))+100, this.Height()-125,75,75,"Cancel");
             this.AddAll([this._label,this._yesButton,this._noButton]);
         }
         let me = this;
         this.Show = function() {
             if (this.DomObject() == null) {
                 me = UIManager.createUIElement(me);
+                me.CenterX(me.X());
+                me.CenterY(me.Y());
                 me._label.InnerText(text);
+                var tempStyle = me._label.GetStyleString();
+                tempStyle += "font-size:24px;text-align:center;"
+                me._label.Style(tempStyle);
                 me._yesButton.events.onClick.add(function() {
                     me.response = true;
                     if (me.delegate != null) {

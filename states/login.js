@@ -22,6 +22,10 @@ var loginState = {
                 loginState.loginFailed();
             }
         }
+        else if (event == "register") {
+            console.log(data ? "Registration successful!" : "Registration failed!");
+            (data) ? loginState.registerSuccess() : loginState.registerFailed();
+        }
         },
     ConfirmationDialogFinish: function(obj) {
         obj.kill();
@@ -56,10 +60,27 @@ var loginState = {
         new UIManager.UIDialog("myDiag",game.world.centerX,game.world.centerY,"Welcome to Anima!",false).Show().delegate = this;
         //UIManager.createConfirmationDialog(game.world.centerX, game.world.centerY, "Welcome to Anima",true).delegate = this;
     },
+    registerSuccess : function() {
+        new UIManager.UIDialog("myDiag",game.world.centerX,game.world.centerY,"Registration Successful",false).Show().delegate = this;
+        this.loginPanel.UpdateObject();
+
+    },
+    registerFailed : function() {
+        new UIManager.UIDialog("myDiag",game.world.centerX,game.world.centerY,"Registration Failed",false).Show().delegate = this;
+        this.loginPanel.UpdateObject();
+    },
     DoLogin : function() {
         var creds = {username:this.userEntry.Value(),password:this.passEntry.Value()}
         if (creds.username != "" && creds.password != "") {
             NetworkManager.TryLogin(creds);
+            this.userEntry.Value("");
+            this.passEntry.Value("");
+        }
+    },
+    DoRegister : function() {
+        var creds = {username:this.userEntry.Value(),password:this.passEntry.Value()}
+        if (creds.username != "" && creds.password != "") {
+            NetworkManager.TryRegister(creds);
             this.userEntry.Value("");
             this.passEntry.Value("");
         }
@@ -72,20 +93,21 @@ var loginState = {
         this.passEntry = new UIManager.UIEntry("pass",this.userEntry.X(), this.userEntry.Y()+35,125,25,true);
         this.loginBtn = new UIManager.UIButton("loginBtn",this.userEntry.X(),this.passEntry.Y()+45,128,35,"Login");
         
-       //this.testBtn = new UIManager.UIButton("testBtn",this.loginBtn.X(),this.loginBtn.Y()+45,128,35,"TEST");
+       this.testBtn = new UIManager.UIButton("testBtn",this.loginBtn.X(),this.loginBtn.Y()+45,128,35,"Register");
 
-        this.loginPanel.AddAll([this.userEntry,this.passEntry,this.loginBtn/*,this.testBtn*/]);
+        this.loginPanel.AddAll([this.userEntry,this.passEntry,this.loginBtn,this.testBtn]);
 
         UIManager.createUIElement(this.loginPanel);
 
         this.userEntry.Text("Username");
         this.passEntry.Text("Password");
 
-        //this.loginBtn.DomObject().onclick= function() {
-        //    loginState.DoLogin();
-        //}
         this.loginBtn.events.onClick.add(function() {
             loginState.DoLogin();
+        },this);
+
+        this.testBtn.events.onClick.add(function() {
+            loginState.DoRegister();
         },this);
 
     }

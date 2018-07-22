@@ -388,12 +388,12 @@ var UIManager = {
         this.response = null;
         this._label = new UIManager.UIBase(id+"-label",this.LocalCenterX()-(450/2),this.LocalCenterY()-50,450,100);
         if (isOnebutton) {
-            this._yesButton = new UIManager.UIButton(id+"-posbtn",this.LocalCenterX()-(75/2), this.Height()-125,75,75,"Ok");
+            this._yesButton = new UIManager.UIButton(id+"-posbtn",this.LocalCenterX()-(40), this.Height()-125,80,60,"Ok");
             this.AddAll([this._label,this._yesButton]);
         }
         else {
-            this._yesButton = new UIManager.UIButton(id+"-posbtn",(this.LocalCenterX()-(75/2))-100, this.Height()-125,75,75,"Ok");
-            this._noButton = new UIManager.UIButton(id+"-negbtn",(this.LocalCenterX()-(75/2))+100, this.Height()-125,75,75,"Cancel");
+            this._yesButton = new UIManager.UIButton(id+"-posbtn",(this.LocalCenterX()-(40))-100, this.Height()-125,80,60,"Ok");
+            this._noButton = new UIManager.UIButton(id+"-negbtn",(this.LocalCenterX()-(40))+100, this.Height()-125,80,60,"Cancel");
             this.AddAll([this._label,this._yesButton,this._noButton]);
         }
         let me = this;

@@ -1,3 +1,5 @@
+
+
 const express= require('express')
 const sqlite=require('sqlite3').verbose();
 const myUtil=require('./DataClasses');
@@ -40,6 +42,9 @@ myObject.Read(1).then(function() {
  * Handle Requests
  * 
  */
+
+var users = {};
+
 http.listen(PORT, function(){
     console.log('listening on *:' + PORT);
   });
@@ -53,7 +58,7 @@ http.listen(PORT, function(){
         }
         (async ()=> {
           var myObject = new myUtil.DataObject(db);
-          var ans = await myObject.ReadWhere(["username","password"],[message.username,message.password]);
+          var ans = await myObject.ReadWhere(["username","password"],[myUtil.MD5(message.username+myUtil.MD5Salt),myUtil.MD5(message.password+myUtil.MD5Salt)]);
           if (ans) {
             if (DEBUG) console.log("<Debug> Login succesful");
             socket.emit("login","true");
@@ -64,6 +69,27 @@ http.listen(PORT, function(){
           }
         })();
       });
+      socket.on("register",(message) => {
+        if (DEBUG) {
+          console.log("<Debug> Request type: register");
+          console.log(message);
+        }
+        TryRegister(socket,message);
+      });
   });
-
+async function TryRegister(socket,creds) {
+  var myObject = new myUtil.DataObject(db);
+  var isPresent = await myObject.ReadWhere(["username","password"],[myUtil.MD5(creds.username+myUtil.MD5Salt),myUtil.MD5(creds.password+myUtil.MD5Salt)]);
+  var result = false;
+  if (!isPresent) {
+      myObject.data.username=myUtil.MD5(creds.username+myUtil.MD5Salt);
+      myObject.data.password=myUtil.MD5(creds.password+myUtil.MD5Salt);
+      result = await myObject.Post();
+  }
+  socket.emit("register",result);
+  if (DEBUG) {
+    console.log("<Debug> Registration Success? " + result);
+  }
+  return result;
+}
 

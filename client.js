@@ -9,6 +9,10 @@ var NetworkManager = {
             console.log("Got some data!");
             NetworkManager.broadcast("login",message);
         });
+        this.socket.on("register", function(message) {
+            console.log("Got some data!");
+            NetworkManager.broadcast("register",message);
+        });
     },
     broadcast : function(event,data) {
         for (var i = 0; i < this.observers.length; i++) {
@@ -23,6 +27,12 @@ var NetworkManager = {
         if (this.isConnected) {
             this.socket.emit("login",creds);
             console.log("Trying to log in!");
+        }
+    },
+    TryRegister : function(creds) {
+        if (this.isConnected) {
+            this.socket.emit("register",creds);
+            console.log("Trying to register in!");
         }
     }   
 }

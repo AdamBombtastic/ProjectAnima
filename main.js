@@ -37,5 +37,6 @@ function setGameScale() {
 }
 
 game.state.add("login",loginState);
+game.state.add("mainMenu",menuState);
 
 game.state.start("login");

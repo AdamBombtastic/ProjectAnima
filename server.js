@@ -44,6 +44,7 @@ myObject.Read(1).then(function() {
  */
 
 var users = {};
+var userCount = 0;
 
 http.listen(PORT, function(){
     console.log('listening on *:' + PORT);
@@ -62,6 +63,10 @@ http.listen(PORT, function(){
           if (ans) {
             if (DEBUG) console.log("<Debug> Login succesful");
             socket.emit("login","true");
+            console.log(myObject);
+            users[socket.id] = myObject;
+            myObject.data.displayname = "User"+userCount;
+            userCount+=1;
           }
           else {
             if (DEBUG) console.log("<Debug> Login failed");
@@ -75,6 +80,14 @@ http.listen(PORT, function(){
           console.log(message);
         }
         TryRegister(socket,message);
+      });
+      socket.on("chat",(data) => {
+        if (DEBUG) {
+          console.log("<Debug> Request type: chat");
+          console.log(data);
+        }
+        ParseChat(socket,data);
+
       });
   });
 async function TryRegister(socket,creds) {
@@ -92,4 +105,8 @@ async function TryRegister(socket,creds) {
   }
   return result;
 }
-
+async function ParseChat(socket,data) {
+  var myUser = users[socket.id];
+  var message = {username : myUser.data.displayname, message: data}
+  io.emit("chat",message);
+}

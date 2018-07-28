@@ -13,6 +13,10 @@ var NetworkManager = {
             console.log("Got some data!");
             NetworkManager.broadcast("register",message);
         });
+        this.socket.on("chat", function(message) {
+            console.log("Got some data!");
+            NetworkManager.broadcast("chat",message);
+        });
     },
     broadcast : function(event,data) {
         for (var i = 0; i < this.observers.length; i++) {
@@ -33,6 +37,12 @@ var NetworkManager = {
         if (this.isConnected) {
             this.socket.emit("register",creds);
             console.log("Trying to register in!");
+        }
+    },
+    SendChat : function(message) {
+        if (this.isConnected) {
+            this.socket.emit("chat",message);
+            console.log("Sending chat:" + message);
         }
     }   
 }

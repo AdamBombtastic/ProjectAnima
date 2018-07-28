@@ -57,8 +57,8 @@ var loginState = {
     },
     loginSuccess : function() {
         UIManager.ClearUI();
-        new UIManager.UIDialog("myDiag",game.world.centerX,game.world.centerY,"Welcome to Anima!",false).Show().delegate = this;
-        //UIManager.createConfirmationDialog(game.world.centerX, game.world.centerY, "Welcome to Anima",true).delegate = this;
+        
+        NavigationManager.pushState("mainMenu");
     },
     registerSuccess : function() {
         new UIManager.UIDialog("myDiag",game.world.centerX,game.world.centerY,"Registration Successful",false).Show().delegate = this;

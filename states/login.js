@@ -14,8 +14,8 @@ var loginState = {
     NetworkUpdate: function(event,data) {
         console.log("World State Recieved: " + event + " " + data);
         if (event == "login") {
-            console.log(data == "true" ? "Login successful!" : "Login failed!");
-            if (data == "true") {
+            console.log(data.success ? "Login successful!" : "Login failed!");
+            if (data.success) {
                 loginState.loginSuccess();
             }
             else {
@@ -109,7 +109,6 @@ var loginState = {
         this.testBtn.events.onClick.add(function() {
             loginState.DoRegister();
         },this);
-
     }
 }
 

@@ -156,6 +156,7 @@ var UIManager = {
         this._domObject = null;
         this._class = "div";
         this._attributes= "";
+        this.styleOptions = [];
 
         this.GetStyleString = function() {
             var styleString = "position: absolute; z-index:500; ";
@@ -163,11 +164,22 @@ var UIManager = {
                 styleString += "width: "+this._width+"px; height: "+this._height+"px; ";
                 styleString += "right: 0; bottom: 0;";
                 styleString += "opacity: " + this._alpha+"; ";
-                
+                styleString += this._parseStyleArray();
                 if (this._domObject != null) {
                     this._domObject.style = styleString;
                 }
                 return styleString;
+        }
+        this.AddStyle = function(key,value) {
+            this.styleOptions.push({key: key, value : value});
+        }
+        this._parseStyleArray = ()=> { 
+            var outString = "";
+            for (var i = 0; i < this.styleOptions.length; i++) {
+                var myObj = this.styleOptions[i];
+                outString += myObj.key+": " + myObj.value+"; ";
+            }
+            return outString;
         }
         this.RefreshSelector = function() {
             this._domObject = document.getElementById(this.id);

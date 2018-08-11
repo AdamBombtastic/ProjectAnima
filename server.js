@@ -58,19 +58,33 @@ http.listen(PORT, function(){
           console.log(message);
         }
         (async ()=> {
-          var myObject = new myUtil.DataObject(db);
+          var myObject = new myUtil.UserObject(db);
           var ans = await myObject.ReadWhere(["username","password"],[myUtil.MD5(message.username+myUtil.MD5Salt),myUtil.MD5(message.password+myUtil.MD5Salt)]);
           if (ans) {
             if (DEBUG) console.log("<Debug> Login succesful");
-            socket.emit("login","true");
-            console.log(myObject);
+            
             users[socket.id] = myObject;
-            myObject.data.displayname = "User"+userCount;
+            if (myObject.data.displayname == null) {
+              myObject.DisplayName("User"+myObject.hmy); 
+            }
+            myObject.DateLastLoggedIn(Date.now());
+
             userCount+=1;
+            socket.emit("login",{success: true, displayname: myObject.data.displayname});
+            console.log(myObject);
           }
           else {
             if (DEBUG) console.log("<Debug> Login failed");
-            socket.emit("login","false");
+            socket.emit("login",{success: false});
+          }
+        })();
+      });
+      socket.on("disconnect",(reason)=> {
+          (async ()=> {
+          console.log("User disconnected! Saving data . . .");
+          var myUser = users[socket.id];
+          if (myUser != null) {
+            await myUser.Post();
           }
         })();
       });
@@ -91,12 +105,15 @@ http.listen(PORT, function(){
       });
   });
 async function TryRegister(socket,creds) {
-  var myObject = new myUtil.DataObject(db);
+  var myObject = new myUtil.UserObject(db);
   var isPresent = await myObject.ReadWhere(["username","password"],[myUtil.MD5(creds.username+myUtil.MD5Salt),myUtil.MD5(creds.password+myUtil.MD5Salt)]);
   var result = false;
   if (!isPresent) {
-      myObject.data.username=myUtil.MD5(creds.username+myUtil.MD5Salt);
-      myObject.data.password=myUtil.MD5(creds.password+myUtil.MD5Salt);
+      myObject.Username(myUtil.MD5(creds.username+myUtil.MD5Salt));
+      myObject.Password(myUtil.MD5(creds.password+myUtil.MD5Salt));
+      myObject.DisplayName(creds.username);
+      myObject.DateCreated(Date.now());
+      myObject.DateLastLoggedIn(0);
       result = await myObject.Post();
   }
   socket.emit("register",result);
@@ -110,3 +127,14 @@ async function ParseChat(socket,data) {
   var message = {username : myUser.data.displayname, message: data}
   io.emit("chat",message);
 }
+async function CreateSpirit(socket,data) {
+    var myUser = users[socket.id];
+    var mySpirit = new myUtil.SpiritOject(db);
+    mySpirit.Name("Little Spirit");
+    mySpirit.DateCreated(Date.now());
+    mySpirit.OwnerId(myUser.hmy);
+    var success = await mySpirit.Post();
+    if (success) {
+      return myDataObject;
+    }
+  }

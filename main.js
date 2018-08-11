@@ -1,5 +1,6 @@
 //TODO set resolution to the max window bounds and create a game state to detect if the phone is sideways or not. 
-
+const GAME_WIDTH = 1334;
+const GAME_HEIGHT = 750;
 var game = new Phaser.Game(1334, 750, Phaser.AUTO, 'myGame');
  
 //var clientWidth = function () {  return Math.max(window.innerWidth, document.documentElement.clientWidth);};
@@ -38,5 +39,6 @@ function setGameScale() {
 
 game.state.add("login",loginState);
 game.state.add("mainMenu",menuState);
+game.state.add("train",trainState);
 
 game.state.start("login");

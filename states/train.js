@@ -13,6 +13,16 @@ var trainState = {
         if (event == "chat") {
             this.chatArea.AppendLine(data.username + ": " + data.message);
         }
+        else if (event == "spirit") {
+            //Stuff
+            console.log(data);
+            if (data != null && data.data != null) {
+                for (var i = 0; i < data.data.length; i++) {
+                    AnimaUser.AddSpirit(new SpiritObject(data.data[i]));
+                }
+            }
+            this.ShowUI();
+        }
         },
     ConfirmationDialogFinish: function(obj) {
         obj.kill();
@@ -26,10 +36,12 @@ var trainState = {
         
         NetworkManager.addObserver(this);
         
+        
     },
     create : function() {
         game.stage.backgroundColor=0x72707A;
-        this.ShowUI();
+        
+        NetworkManager.GetSpiritInfo();
         //UIManager.createConfirmationDialog(game.world.centerX,game.world.centerY,"Welcome to my world",true).delegate = this;
     },
     update : function() {

@@ -37,10 +37,10 @@ module.exports = {
             }
             return false;
         }
-        this.ReadWhere = async function(colnames,vals) {
-            var rows = await this._querySafe(this._readWhereSQL(colnames,vals));
+        this.ReadWhere = async function(colnames,vals,singleVal=true) {
+            var rows = await this._querySafe(this._readWhereSQL(colnames,vals,singleVal));
             if (rows != null) {
-                return await this._readParse(rows);
+                return await this._readParse(rows,singleVal);
             }
             return false;
         }
@@ -91,22 +91,39 @@ module.exports = {
             return sql;
         },
         //ASSUME THIS IS ONLY FOR DATA
-        this._readWhereSQL = function(colNames,vals) {
+        this._readWhereSQL = function(colNames,vals,singleVal=true) {
             var sql = "SELECT " + this._getColSQL() + " from " + this.tableName + " where 1=1 ";
             for (var i = 0; i < colNames.length && i < vals.length; i++) {
                 sql += "AND data LIKE '%";
-                sql += '"'+colNames[i]+'":"'+vals[i]+'"%'+"' ";
+                if (typeof vals[i] == "number") {sql += '"'+colNames[i]+'":'+vals[i]+'%'+"' ";}
+                else sql += '"'+colNames[i]+'":"'+vals[i]+'"%'+"' ";
             }
-            return sql+" LIMIT 1;";
+            return (singleVal) ? sql+" LIMIT 1;" : sql +";";
         },
-        this._readParse = function(rows) {
+        this._readParse = function(rows,singleVal) {
             
             if (rows == null || rows.length == 0) return false;
-            var row = rows[0];
-            this.hmy = row.hmy;
-            this.type = row.type;
-            this.data = JSON.parse(row.data);
-            return true;
+            if (singleVal) {
+                var row = rows[0];
+                this.hmy = row.hmy;
+                this.type = row.type;
+                this.data = JSON.parse(row.data);
+                return true;
+            }
+            else {
+                var returnArr = [];
+                for (var i = 0; i < rows.length; i++) {
+                    var row = rows[i];
+                    var absObj = {
+                        hmy : row.hmy,
+                        type : row.type,
+                        data : JSON.parse(row.data),
+                    }
+                    returnArr.push(absObj);
+                }
+                return returnArr;
+            }
+           
         }
         this._insertSQL = function() {
             var sql = "INSERT INTO " + this.tableName + " ("+this._getColNoHMYSQL() +") VALUES (" + this._getPropNoHMYSQL() + ");";
@@ -218,6 +235,9 @@ module.exports = {
         }
         this.DateLastLoggedIn = function(val = null) {
             return this._baseProp("dtLastLoggedIn",val);
+        }
+        this.Spirits = async function() {
+            return await this.ReadWhere(["hOwner"],[this.hmy],false);
         }
     }, 
     SpiritOject : function(db) {

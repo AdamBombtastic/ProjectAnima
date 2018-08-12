@@ -103,6 +103,9 @@ http.listen(PORT, function(){
         ParseChat(socket,data);
 
       });
+      socket.on("spirit",(data) => {
+        TryGetSpirits(socket,data);
+      });
   });
 async function TryRegister(socket,creds) {
   var myObject = new myUtil.UserObject(db);
@@ -127,6 +130,22 @@ async function ParseChat(socket,data) {
   var message = {username : myUser.data.displayname, message: data}
   io.emit("chat",message);
 }
+async function TryGetSpirits(socket,data) {
+  var myUser = users[socket.id];
+  if (myUser != null) {
+    var spirits = await myUser.Spirits();
+    if (spirits == null || spirits.length == 0 || spirits == false) {
+      spirits = [];
+      var mySpirit =  await (CreateSpirit(socket,data));
+      spirits.push(mySpirit.data);
+    }
+    if (DEBUG) {
+      console.log("<Debug> Sending spirit info ")
+      console.log(spirits);
+    }
+    socket.emit("spirit",{data: spirits});
+  }
+}
 async function CreateSpirit(socket,data) {
     var myUser = users[socket.id];
     var mySpirit = new myUtil.SpiritOject(db);
@@ -134,7 +153,5 @@ async function CreateSpirit(socket,data) {
     mySpirit.DateCreated(Date.now());
     mySpirit.OwnerId(myUser.hmy);
     var success = await mySpirit.Post();
-    if (success) {
-      return myDataObject;
-    }
+    return mySpirit;
   }

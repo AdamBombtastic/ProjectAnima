@@ -3,7 +3,7 @@
  * Date:4/6/2016
  * Programmer: Adam Austin
  * 
- * 
+ * TODO: Refactor this whole damn view.
  * 
 */
 var GRID_DIRECTIONS = {
@@ -12,6 +12,14 @@ var GRID_DIRECTIONS = {
     LEFT : 2,
     RIGHT : 3
 }
+var BATTLE_REQUEST = {
+    MOVE : 0,
+    ATTACK : 1,
+  }
+  var EFFECT_TYPES =  {
+    BLAST : 0,
+    EXPLOSTION : 1,
+  }
 var battleState = {
     started : false,
     bullets : [],
@@ -35,14 +43,30 @@ var battleState = {
     },
     preload : function() {
         game.load.image("tile_basic","graphics\\testTile2.png");
-        game.load.image("battler_basic","graphics\\testBattler.png");
+        game.load.spritesheet("battler_basic","graphics\\testBattler.png",128,128,2);
         game.load.spritesheet("proj_basic","graphics\\erotic_balls.png",32,32,6);
+        game.load.spritesheet("basic_blast","graphics\\basic_blast2.png",128,128,6);
+        game.load.spritesheet("basic_explosion","graphics\\basic_explosion2.png",64,64,5);
     },
     init : function() {
         
         NetworkManager.addObserver(this);
         
         
+    },
+    createExplosion: function(playerObj) {
+        var myExplosion = game.add.sprite(0,0,"basic_explosion",0);
+        myExplosion.centerX = playerObj.centerX;
+        myExplosion.centerY = playerObj.centerY;
+        var animPlay = myExplosion.animations.add("play");
+        animPlay.play(12,false,true);
+    },
+    createBlast: function(playerObj) {
+        var myExplosion = game.add.sprite(0,0,"basic_blast",0);
+        myExplosion.centerX = playerObj.centerX;
+        myExplosion.centerY = playerObj.centerY;
+        var animPlay = myExplosion.animations.add("play");
+        animPlay.play(24,false,true);
     },
     getPlayersFromData : function() {
         var myPlayer = null;
@@ -79,16 +103,25 @@ var battleState = {
         var myPlayer = players.me;
         var enemyPlayer = players.enemy;
 
-
+         var isLeft = myPlayer.x < 3;
         //myTiles.group.centerX = game.world.centerX;
-        if (this.myBattler == null) this.myBattler = game.add.sprite(0,0,"battler_basic");
+        var textStyle = {font: "32px Arial", fill: "#FFFFFF"}
+        if (this.myBattler == null) {
+            this.myBattler = game.add.sprite(0,0,"battler_basic",(isLeft) ? 0 : 1);
+            this.myBattlerText = game.add.text(0,0,myPlayer.health,textStyle);
+        }
         this.myBattler.myGridPos = {x : myPlayer.x, y : myPlayer.y}
 
-        if (this.myEnemy == null) this.myEnemy = game.add.sprite(0,0, "battler_basic");
+        if (this.myEnemy == null) {
+            this.myEnemy = game.add.sprite(0,0, "battler_basic",(isLeft) ? 1 : 0);
+            this.myEnemyText = game.add.text(0,0,enemyPlayer.health,textStyle);
+        }
         this.myEnemy.myGridPos = {x : enemyPlayer.x, y: enemyPlayer.y}
 
-        this.renderPlayer(this.myBattler,this.myBattler.myGridPos.x,this.myBattler.myGridPos.y);
-        this.renderPlayer(this.myEnemy,this.myEnemy.myGridPos.x,this.myEnemy.myGridPos.y);
+        this.renderPlayer(this.myBattler,this.myBattler.myGridPos.x,this.myBattler.myGridPos.y,this.myBattlerText,myPlayer);
+        this.renderPlayer(this.myEnemy,this.myEnemy.myGridPos.x,this.myEnemy.myGridPos.y,this.myEnemyText,enemyPlayer);
+
+        this.renderObjects();
 
         this.cursors = game.input.keyboard.createCursorKeys();
         this.spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -98,7 +131,7 @@ var battleState = {
     create : function() {
         UIManager.ClearUI();
         game.stage.backgroundColor=0x72707A;
-        
+        game.stage.disableVisibilityChange = true;
         //NetworkManager.GetSpiritInfo();
         ;
         this.ShowUI();
@@ -108,11 +141,9 @@ var battleState = {
         this.wDialog.Show();
         
         NetworkManager.RequestBattle();
-
-        //TODO: Render the states that the server sends to me!
     },
     TryMove: function(dir) {
-        NetworkManager.UpdateBattle({direction: dir});
+        NetworkManager.UpdateBattle({type: BATTLE_REQUEST.MOVE,direction: dir});
     },
     moveInDirection : function(dir) {
         var x = this.myBattler.myGridPos.x;
@@ -134,11 +165,33 @@ var battleState = {
         }
        this.renderPlayer(x,y);
     },
-    renderPlayer : function(playerSprite,x,y,isPlayerOne=true) {
+    renderObjects : function() {
+        if (this.sceneData != null && this.sceneData.objects != null) {
+            for (var i = 0; i < this.sceneData.objects.length; i++) {
+                var myObject = this.sceneData.objects[i];
+                if (myObject.type == EFFECT_TYPES.BLAST) {
+                    if (this.myBattler.myGridPos.x == myObject.x && this.myBattler.myGridPos.y == myObject.y) {
+                        this.createBlast(this.myBattler);
+                    }
+                    else this.createBlast(this.myEnemy);
+                }
+                else if (myObject.type == EFFECT_TYPES.EXPLOSTION) {
+                    if (this.myBattler.myGridPos.x == myObject.x && this.myBattler.myGridPos.y == myObject.y) {
+                        this.createExplosion(this.myBattler);
+                    }
+                    else this.createExplosion(this.myEnemy);
+                }
+            }
+        }
+    },
+    renderPlayer : function(playerSprite,x,y,playerText,playerInfo) {
         var theTile = this.gridTiles[x][y];
         playerSprite.centerX = theTile.centerX;
         playerSprite.centerY = theTile.centerY-32;
         playerSprite.myGridPos = {x:x,y:y}
+        playerText.centerX = playerSprite.centerX;
+        playerText.centerY = playerSprite.y-16;
+        playerText.text = playerInfo.health;
     },
     manageBullets : function(bulletSpeed=32) {
         var newBulletList = [];
@@ -148,7 +201,6 @@ var battleState = {
                 this.bullets[i].kill();
             }
             else newBulletList.push(this.bullets[i]);
-            //TODO: Check if they are off screen.
         }
         this.bullets = newBulletList;
     },
@@ -185,9 +237,9 @@ var battleState = {
             if (this.canFire) {
                 if (this.spaceKey.isDown) {
                     battleState.canFire = false;
-                    var myBall = game.add.sprite(this.myBattler.centerX+48,this.myBattler.centerY-32,"proj_basic",0);
-                    myBall.centerY = this.myBattler.centerY;
-                    battleState.bullets.push(myBall);
+                    //this.createBlast(this.myBattler);
+                    //this.createExplosion(this.myEnemy);
+                    NetworkManager.UpdateBattle({type:BATTLE_REQUEST.ATTACK});
                     game.time.events.add(Phaser.Timer.SECOND /3, () => {battleState.canFire = true},this);
                 }
             }
@@ -204,7 +256,6 @@ var battleState = {
         myUIObj.AddStyle("line-height",myUIObj.Height()+"px");
     },
     ShowUI : function() {
-        //TODO: Add the progress bar so we can actually train up their different stats
         UIManager.ClearUI();
         /* Header */
         this.navBar = new UIManager.UIPanel("navBar",0,0,GAME_WIDTH-6,125,"#226666","#FFFFFF","#226666");

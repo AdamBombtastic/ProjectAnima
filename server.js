@@ -10,6 +10,16 @@ var io = require('socket.io')(http);
 var DEBUG = true;
 
 const PORT = 8000;
+/*
+* DATE: 9/3/2018
+* TODO: Refactor the BattleManager code & event parsing
+        Remove players from rooms when they disconnect
+        Keep track of stats from combat
+        Win/Lose
+        Allow players to create their own rooms
+        Add Battle Spells
+        Make stats of the spirit matter in battle
+*/
 
 /** 
  * 
@@ -44,6 +54,8 @@ myObject.Read(1).then(function() {
  */
 
 var users = {};
+
+var tickRate = 10;
 
 var battleQueue = [];
 
@@ -114,14 +126,21 @@ http.listen(PORT, function(){
         AddToBattleQueue(socket,data);
       });
       socket.on("battleUpdate",(data) => {
-        if (data != null && data.direction != null) {
-          var checkRoom = BattleRoomManager.TryMovePlayer(socket.id,data.direction);
+        if (data != null && data.type != null) {
+          var checkRoom = null;
+          if (data.type == BATTLE_REQUEST.MOVE && data.direction != null) {
+            checkRoom = BattleRoomManager.TryMovePlayer(socket.id,data.direction);
+          } 
+          else if (data.type == BATTLE_REQUEST.ATTACK) {
+            checkRoom = BattleRoomManager.TryAddAttack(socket.id);
+          }
           if (checkRoom != null) {
             for (var i = 0; i < checkRoom.sockets.length; i++) {
               var mySocket = checkRoom.sockets[i];
               var myPlayer = users[mySocket.id];
               mySocket.emit("battleUpdate",{players : checkRoom.players, objects : checkRoom.objects});
             }
+            checkRoom.objects = []; //clear dead objects
           }
         }
       });
@@ -217,11 +236,26 @@ var BattleRoomManager = {
       if (i > 0) myPlayer.battleInfo.x = 5;
       mBattleRoom.players.push(myPlayer.battleInfo);
     }
-
     BattleRoomManager.roomMap[BattleRoomManager.roomCount] = mBattleRoom;
     BattleRoomManager.rooms.push(mBattleRoom);
     BattleRoomManager.roomCount =+ 1;
     return mBattleRoom;
+  },
+  TryAddAttack : function(key) {
+    var myPlayer = users[key];
+    if (myPlayer.battleInfo != null && myPlayer.battleInfo.roomId != null && this.roomMap[myPlayer.battleInfo.roomId] != null) {
+      var myRoom = this.roomMap[myPlayer.battleInfo.roomId];
+      myRoom.objects.push({type: EFFECT_TYPES.BLAST, x: myPlayer.battleInfo.x, y : myPlayer.battleInfo.y});
+      for (var i = 0; i < myRoom.players.length; i++) {
+        var tempPlayer = myRoom.players[i];
+        if (tempPlayer.key !=  myPlayer.battleInfo.key && tempPlayer.y == myPlayer.battleInfo.y) {
+          myRoom.objects.push({type: EFFECT_TYPES.EXPLOSTION, x : tempPlayer.x, y : tempPlayer.y});
+          tempPlayer.health -= 5;
+        }
+      }
+      return myRoom; //return the room;
+    }
+    return null;
   },
   TryMovePlayer : function(key, dir) {
     var myPlayer = users[key];
@@ -264,4 +298,12 @@ var GRID_DIRECTIONS = {
     DOWN : 1,
     LEFT : 2,
     RIGHT : 3
+}
+var BATTLE_REQUEST = {
+  MOVE : 0,
+  ATTACK : 1,
+}
+var EFFECT_TYPES =  {
+  BLAST : 0,
+  EXPLOSTION : 1,
 }

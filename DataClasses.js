@@ -250,6 +250,8 @@ module.exports = {
             strength : 1,
             dexterity : 1,
             intelligence : 1,
+            health : 10,
+            mana : 1,
             training : -1,
             dtStartedTraining : 0,
             duration : 0,
@@ -272,6 +274,12 @@ module.exports = {
         }
         this.Intelligence = function(val=null) {
             return this._baseProp("intelligence",val);
+        }
+        this.Health = function(val=null) {
+            return this._baseProp("health",val);
+        }
+        this.Mana = function(val=null) {
+            return this._baseProp("mana");
         }
         this.TrainingType = function(val=null) {
             return this._baseProp("training",val);

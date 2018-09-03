@@ -44,6 +44,9 @@ myObject.Read(1).then(function() {
  */
 
 var users = {};
+
+var battleQueue = [];
+
 var userCount = 0;
 
 http.listen(PORT, function(){
@@ -51,7 +54,7 @@ http.listen(PORT, function(){
   });
 
   io.on("connection",function(socket) {
-      console.log("Another soul dropped in. . .");
+      console.log("Another soul dropped in. . ." + socket.id);
       socket.on("login",(message) => {
         if (DEBUG) {
           console.log("<Debug> Request type: login");
@@ -85,6 +88,7 @@ http.listen(PORT, function(){
           var myUser = users[socket.id];
           if (myUser != null) {
             await myUser.Post();
+            removeFromBattleQueue(socket);
           }
         })();
       });
@@ -105,6 +109,21 @@ http.listen(PORT, function(){
       });
       socket.on("spirit",(data) => {
         TryGetSpirits(socket,data);
+      });
+      socket.on("requestBattle",(data) => {
+        AddToBattleQueue(socket,data);
+      });
+      socket.on("battleUpdate",(data) => {
+        if (data != null && data.direction != null) {
+          var checkRoom = BattleRoomManager.TryMovePlayer(socket.id,data.direction);
+          if (checkRoom != null) {
+            for (var i = 0; i < checkRoom.sockets.length; i++) {
+              var mySocket = checkRoom.sockets[i];
+              var myPlayer = users[mySocket.id];
+              mySocket.emit("battleUpdate",{players : checkRoom.players, objects : checkRoom.objects});
+            }
+          }
+        }
       });
   });
 async function TryRegister(socket,creds) {
@@ -155,3 +174,94 @@ async function CreateSpirit(socket,data) {
     var success = await mySpirit.Post();
     return mySpirit;
   }
+
+  async function AddToBattleQueue(socket,data) {
+    battleQueue.push(socket);
+    var checkRoom = checkForBattle();
+    if (checkRoom != null) {
+      for (var i = 0; i < checkRoom.sockets.length; i++) {
+        var mySocket = checkRoom.sockets[i];
+        var myPlayer = users[mySocket.id];
+        mySocket.emit("battleUpdate",{players : checkRoom.players, objects : checkRoom.objects});
+      }
+    }
+  }
+  function removeFromBattleQueue(socket) {
+    var myIndex = battleQueue.indexOf(socket);
+    if (myIndex != -1) battleQueue.splice(myIndex,1);
+  }
+
+  function checkForBattle() {
+    if (battleQueue.length > 1) {
+      var players = battleQueue.splice(0,2);
+      return BattleRoomManager.createBattleRoom(players);
+    
+    }
+    return null;
+  }
+
+/** Grid Combat Test! **/
+var BattleRoomManager = {
+  roomMap : {},
+  rooms : [],
+  roomCount : 0,
+  createBattleRoom : function(playerSockets) {
+    var mBattleRoom = {}
+    mBattleRoom.roomId = BattleRoomManager.roomCount;
+    mBattleRoom.sockets = playerSockets;
+    mBattleRoom.players = [];
+    mBattleRoom.objects = [];
+    for (var i = 0; i < playerSockets.length; i++) {
+      var myPlayer = users[playerSockets[i].id];
+      myPlayer.battleInfo = {key: playerSockets[i].id, x: 0, y: 0,health: 100, battleOrder : i, roomId : BattleRoomManager.roomCount}
+      if (i > 0) myPlayer.battleInfo.x = 5;
+      mBattleRoom.players.push(myPlayer.battleInfo);
+    }
+
+    BattleRoomManager.roomMap[BattleRoomManager.roomCount] = mBattleRoom;
+    BattleRoomManager.rooms.push(mBattleRoom);
+    BattleRoomManager.roomCount =+ 1;
+    return mBattleRoom;
+  },
+  TryMovePlayer : function(key, dir) {
+    var myPlayer = users[key];
+    if (myPlayer.battleInfo != null && myPlayer.battleInfo.roomId != null && this.roomMap[myPlayer.battleInfo.roomId] != null) {
+      //valid player and valid room
+      var x = myPlayer.battleInfo.x;
+      var y = myPlayer.battleInfo.y;
+
+      switch (dir) {
+        case GRID_DIRECTIONS.UP:
+          y-=1;
+          break;
+        case GRID_DIRECTIONS.DOWN:
+          y+=1;
+          break;
+        case GRID_DIRECTIONS.LEFT:
+          x-=1;
+          break;
+        case GRID_DIRECTIONS.RIGHT:
+          x+=1;
+          break;
+        default:
+      }
+      if (myPlayer.battleInfo.battleOrder == 0) {
+        myPlayer.battleInfo.x = (x >= 0 && x < 3) ? x : myPlayer.battleInfo.x;
+        myPlayer.battleInfo.y = (y >= 0 && y < 3) ? y : myPlayer.battleInfo.y;
+        
+      }
+      else {
+        myPlayer.battleInfo.x = (x > 2 && x < 6) ? x : myPlayer.battleInfo.x;
+        myPlayer.battleInfo.y = (y >= 0 && y < 3) ? y : myPlayer.battleInfo.y;
+      }
+      return this.roomMap[myPlayer.battleInfo.roomId]; //return the room;
+    }
+    
+  },
+}
+var GRID_DIRECTIONS = {
+    UP : 0,
+    DOWN : 1,
+    LEFT : 2,
+    RIGHT : 3
+}

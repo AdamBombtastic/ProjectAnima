@@ -80,7 +80,7 @@ var trainState = {
         //TODO: Add the progress bar so we can actually train up their different stats
         UIManager.ClearUI();
         /* Header */
-        this.navBar = new UIManager.UIPanel("navBar",0,0,GAME_WIDTH-6,125,"#226666");
+        this.navBar = new UIManager.UIPanel("navBar",0,0,GAME_WIDTH-6,125,"#226666","#FFFFFF","#226666");
         this.navLabel = new UIManager.UIBase("navTitle",5,0,300,50);
         this.navLabel.AddStyle("font-size","40px");
         this.navLabel.AddStyle("color","White");
@@ -93,7 +93,8 @@ var trainState = {
 
         this.ShowChat();
 
-        this.trainingPanel = UIManager.createUIPanel(200,185,460,384+50,0xFFFFFF,0x000000,0.5,1,3);
+        this.trainingPanel = UIManager.createUIPanel(200,185,460,384+50,0xFFFFFF,0xFFFFFF,0.5,0.5,1);
+        this.trainingPanel
         this.spirit = {}
         this.spirit.sprite = game.add.sprite(200,185,"spirit_basic",0);
         this.spirit.sprite.scale.setTo(3,3);
@@ -105,7 +106,7 @@ var trainState = {
         var idleAnim = mySprite.animations.add('idle',[0,1,2,1,0,1,2,1,0]);
         mySprite.inputEnabled= true;
         mySprite.events.onInputDown.add(function() {
-            idleAnim.play(6,false);
+            idleAnim.play(10,false);
         },this);
         
 
@@ -127,7 +128,7 @@ var trainState = {
         lblSpiritStatus.UpdateObject();
         lblSpiritStatus.CenterX(this.trainingPanel.centerX);
         lblSpiritStatus.Y(mySprite.y + 120);
-
+        
         var lblSpiritHP = UIManager.createUIElement(new UIManager.UIPanel("lblSpiritHP",220,205,100,100,"#ef5350"));
         lblSpiritHP.InnerText("HP");
         this.AddCircleStyle(lblSpiritHP);

@@ -79,11 +79,13 @@ var menuState = {
         this.tile2.events.onClick.add(() => {
             NavigationManager.pushState("train",null,true);
         },this);
+
+        this.tile1.events.onClick.add( () => {NavigationManager.pushState("battle",null,true);},this);
     },
     ShowUI : function() {
         UIManager.ClearUI();
         /* Header */
-        this.navBar = new UIManager.UIPanel("navBar",0,0,GAME_WIDTH-6,125,"#226666");
+        this.navBar = new UIManager.UIPanel("navBar",0,0,GAME_WIDTH-6,125,"#226666","#FFFFFF","#226666",0);
         this.navLabel = new UIManager.UIBase("navTitle",5,0,300,50);
         this.navLabel.AddStyle("font-size","40px");
         this.navLabel.AddStyle("color","White");
@@ -105,18 +107,21 @@ var menuState = {
         if (sender == menuState.tile1) {
             sender._backgroundColor = "#832C65";
             menuState.navBar._backgroundColor = "#832C65";
+            menuState.navBar._borderColor = menuState.navBar._backgroundColor;
             menuState.navBar.UpdateObject();
             sender.UpdateObject();
         }
         else if (sender == menuState.tile2) {
             sender._backgroundColor = "#226666";
             menuState.navBar._backgroundColor = "#226666";
+            menuState.navBar._borderColor = menuState.navBar._backgroundColor;
             menuState.navBar.UpdateObject();
             sender.UpdateObject();
         }
         else if (sender == menuState.tile3) {
             sender._backgroundColor = "#AA6A39";
             menuState.navBar._backgroundColor = "#AA6A39";
+            menuState.navBar._borderColor = menuState.navBar._backgroundColor;
             menuState.navBar.UpdateObject();
             sender.UpdateObject();
         }

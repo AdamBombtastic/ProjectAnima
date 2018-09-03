@@ -21,6 +21,10 @@ var NetworkManager = {
             console.log("Got some data!");
             NetworkManager.broadcast("spirit", data);
         });
+        this.socket.on("battleUpdate",function(data) {
+            console.log("Got some data!");
+            NetworkManager.broadcast("battleUpdate",data);
+        });
     },
     broadcast : function(event,data) {
         for (var i = 0; i < this.observers.length; i++) {
@@ -53,6 +57,18 @@ var NetworkManager = {
         if (this.isConnected) {
             this.socket.emit("chat",message);
             console.log("Sending chat:" + message);
+        }
+    },
+    RequestBattle : function() {
+        if (this.isConnected) {
+            this.socket.emit("requestBattle","");
+            console.log("Sending Matchmaking Request!");
+        }
+    },
+    UpdateBattle : function(data) {
+        if (this.isConnected) {
+            this.socket.emit("battleUpdate",data);
+            console.log("Sending battle update:" + data);
         }
     }   
 }
@@ -100,6 +116,12 @@ function SpiritObject(data) {
     }
     this.Intelligence = function(val=null) {
         return this._baseProp("intelligence",val);
+    }
+    this.Health = function(val=null) {
+        return this._baseProp("health",val);
+    }
+    this.Mana = function(val=null) {
+        return this._baseProp("mana");
     }
     this.TrainingType = function(val=null) {
         return this._baseProp("training",val);
